@@ -16,6 +16,7 @@ mod apply_custom_transforms;
 mod apply_fragment_arguments;
 mod apply_transforms;
 mod assignable_fragment_spread;
+mod catch_directive;
 mod client_edges;
 mod client_extensions;
 mod client_extensions_abstract_types;
