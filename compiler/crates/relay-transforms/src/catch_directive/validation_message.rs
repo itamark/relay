@@ -5,40 +5,40 @@
  * LICENSE file in the root directory of this source tree.
  */
 
- use intern::string_key::StringKey;
- use thiserror::Error;
+use intern::string_key::StringKey;
+use thiserror::Error;
 
- #[derive(Error, Debug, serde::Serialize)]
- #[serde(tag = "type")]
- pub(super) enum ValidationMessage {
-     #[error(
-         "Unexpected @catch within inline fragment on an abstract type. At runtime we cannot know if this field is null, or if it's missing because the inline fragment did not match. Consider using `@alias` to give your inline fragment a name."
-     )]
-     CatchWithinAbstractInlineFragment,
+#[derive(Error, Debug, serde::Serialize)]
+#[serde(tag = "type")]
+pub(super) enum ValidationMessage {
+    #[error(
+        "Unexpected @catch within inline fragment on an abstract type. At runtime we cannot know if this field is null, or if it's missing because the inline fragment did not match. Consider using `@alias` to give your inline fragment a name."
+    )]
+    CatchWithinAbstractInlineFragment,
 
-     #[error("@catch is not supported within @inline fragments.")]
-     CatchWithinInlineDirective,
+    #[error("@catch is not supported within @inline fragments.")]
+    CatchWithinInlineDirective,
 
-     #[error("Missing `action` argument. @catch expects an `action` argument")]
-     CatchActionArgumentCatch,
+    #[error("Missing `action` argument. @catch expects an `action` argument")]
+    CatchActionArgumentCatch,
 
-     #[error(
-         "All references to a @catch field must have matching `action` arguments. The `action` used for '{field_name}'"
-     )]
-     CatchToMismatch { field_name: StringKey },
+    #[error(
+        "All references to a @catch field must have matching `action` arguments. The `action` used for '{field_name}'"
+    )]
+    CatchToMismatch { field_name: StringKey },
 
-     #[error(
-         "All references to a field must have matching @catch declarations. The field '{field_name}` is @catch here"
-     )]
-     CatchFieldMismatch { field_name: StringKey },
+    #[error(
+        "All references to a field must have matching @catch declarations. The field '{field_name}` is @catch here"
+    )]
+    CatchFieldMismatch { field_name: StringKey },
 
-     #[error(
-         "@catch fields must be included in all instances of their parent. The field '{field_name}` is marked as @catch here"
-     )]
-     CatchFieldMissing { field_name: StringKey },
+    #[error(
+        "@catch fields must be included in all instances of their parent. The field '{field_name}` is marked as @catch here"
+    )]
+    CatchFieldMissing { field_name: StringKey },
 
-     #[error(
-         "A @catch field may not have an `action` less severe than that of its @catch parent. This @catch directive should probably have `action: {suggested_action}`"
-     )]
-     CatchFieldInvalidNesting { suggested_action: StringKey },
- }
+    #[error(
+        "A @catch field may not have an `action` less severe than that of its @catch parent. This @catch directive should probably have `action: {suggested_action}`"
+    )]
+    CatchFieldInvalidNesting { suggested_action: StringKey },
+}
