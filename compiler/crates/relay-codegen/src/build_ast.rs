@@ -964,6 +964,19 @@ impl<'schema, 'builder, 'config> CodegenBuilder<'schema, 'builder, 'config> {
         }))
     }
 
+    fn build_catch_field(
+        &mut self,
+        required_metadata: &RequiredMetadataDirective,
+        primitive: Primitive,
+    ) -> Primitive {
+        Primitive::Key(self.object(object! {
+            kind: Primitive::String(CODEGEN_CONSTANTS.catch_field),
+            field: primitive,
+            action: Primitive::String(required_metadata.action.into()),
+            path: Primitive::String(required_metadata.path),
+        }))
+    }
+
     fn build_scalar_field(&mut self, field: &ScalarField) -> Primitive {
         let schema_field = self.schema.field(field.definition.item);
         let (name, alias) =
