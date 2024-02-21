@@ -53,9 +53,11 @@ use crate::refetchable_fragment::RefetchableFragment;
 use crate::refetchable_fragment::REFETCHABLE_NAME;
 use crate::relay_resolvers::get_bool_argument_is_true;
 use crate::RequiredMetadataDirective;
+use crate::CatchMetadataDirective;
 use crate::ValidationMessage;
 use crate::CHILDREN_CAN_BUBBLE_METADATA_KEY;
 use crate::REQUIRED_DIRECTIVE_NAME;
+use crate::CATCH_DIRECTIVE_NAME;
 
 lazy_static! {
     // This gets attached to the generated query
@@ -310,8 +312,10 @@ impl<'program, 'pc> ClientEdgesTransform<'program, 'pc> {
         let allowed_directive_names = [
             *CLIENT_EDGE_WATERFALL_DIRECTIVE_NAME,
             *REQUIRED_DIRECTIVE_NAME,
+            *CATCH_DIRECTIVE_NAME,
             *CHILDREN_CAN_BUBBLE_METADATA_KEY,
             RequiredMetadataDirective::directive_name(),
+            CatchMetadataDirective::directive_name(),
         ];
 
         let other_directives = directives

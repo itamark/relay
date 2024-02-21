@@ -1,0 +1,13 @@
+==================================== INPUT ====================================
+fragment EnabledFoo on User {
+  name @catch(to: NULL)
+}
+==================================== OUTPUT ===================================
+fragment EnabledFoo on User @__childrenCanBubbleNull {
+  name @catch(to: NULL) @__CatchMetadataDirective
+  # CatchMetadataDirective {
+  #     to: Null,
+  #     path: "name",
+  # }
+
+}

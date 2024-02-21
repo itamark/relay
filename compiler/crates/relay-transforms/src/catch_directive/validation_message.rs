@@ -19,11 +19,11 @@ pub(super) enum ValidationMessage {
     #[error("@catch is not supported within @inline fragments.")]
     CatchWithinInlineDirective,
 
-    #[error("Missing `action` argument. @catch expects an `action` argument")]
-    CatchActionArgumentCatch,
+    #[error("Missing `to` argument. @catch expects an `to` argument")]
+    CatchToArgumentCatch,
 
     #[error(
-        "All references to a @catch field must have matching `action` arguments. The `action` used for '{field_name}'"
+        "All references to a @catch field must have matching `to` arguments. The `to` used for '{field_name}'"
     )]
     CatchToMismatch { field_name: StringKey },
 
@@ -38,7 +38,7 @@ pub(super) enum ValidationMessage {
     CatchFieldMissing { field_name: StringKey },
 
     #[error(
-        "A @catch field may not have an `action` less severe than that of its @catch parent. This @catch directive should probably have `action: {suggested_action}`"
+        "A @catch field may not have an `to` less severe than that of its @catch parent. This @catch directive should probably have `action: {suggested_action}`"
     )]
     CatchFieldInvalidNesting { suggested_action: StringKey },
 }

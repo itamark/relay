@@ -67,7 +67,7 @@ fn get_to_argument(catch_directive: &Directive) -> Result<WithLocation<CatchTo>,
     let maybe_to_arg = catch_directive.arguments.named(*TO_ARGUMENT);
     let to_arg = maybe_to_arg.ok_or_else(|| {
         Diagnostic::error(
-            ValidationMessage::CatchActionArgumentCatch,
+            ValidationMessage::CatchToArgumentCatch,
             catch_directive.name.location,
         )
     })?;

@@ -46,6 +46,7 @@ use relay_transforms::relay_resolvers::get_resolver_info;
 use relay_transforms::relay_resolvers::resolver_import_alias;
 use relay_transforms::relay_resolvers::ResolverInfo;
 use relay_transforms::remove_directive;
+use relay_transforms::CatchMetadataDirective;
 use relay_transforms::ClientEdgeMetadata;
 use relay_transforms::ClientEdgeMetadataDirective;
 use relay_transforms::ClientExtensionAbstractTypeMetadataDirective;
@@ -750,7 +751,10 @@ impl<'schema, 'builder, 'config> CodegenBuilder<'schema, 'builder, 'config> {
         };
         if let Some(required_metadata) = RequiredMetadataDirective::find(&field.directives) {
             self.build_required_field(required_metadata, resolver_primitive)
-        } else {
+        } else if let Some(catch_metadata) = CatchMetadataDirective::find(&field.directives) {
+            self.build_catch_field(catch_metadata, resolver_primitive)
+        }
+         else {
             resolver_primitive
         }
     }
@@ -966,14 +970,14 @@ impl<'schema, 'builder, 'config> CodegenBuilder<'schema, 'builder, 'config> {
 
     fn build_catch_field(
         &mut self,
-        required_metadata: &RequiredMetadataDirective,
+        catch_metadata: &CatchMetadataDirective,
         primitive: Primitive,
     ) -> Primitive {
         Primitive::Key(self.object(object! {
             kind: Primitive::String(CODEGEN_CONSTANTS.catch_field),
             field: primitive,
-            action: Primitive::String(required_metadata.action.into()),
-            path: Primitive::String(required_metadata.path),
+            action: Primitive::String(catch_metadata.to.into()),
+            path: Primitive::String(catch_metadata.path),
         }))
     }
 
@@ -1004,6 +1008,8 @@ impl<'schema, 'builder, 'config> CodegenBuilder<'schema, 'builder, 'config> {
 
         if let Some(required_metadata) = RequiredMetadataDirective::find(&field.directives) {
             self.build_required_field(required_metadata, primitive)
+        } else if let Some(catch_metadata) = CatchMetadataDirective::find(&field.directives) {
+            self.build_catch_field(catch_metadata, primitive)
         } else {
             primitive
         }
@@ -1102,6 +1108,8 @@ impl<'schema, 'builder, 'config> CodegenBuilder<'schema, 'builder, 'config> {
 
         if let Some(required_metadata) = RequiredMetadataDirective::find(&field.directives) {
             self.build_required_field(required_metadata, primitive)
+        } else if let Some(catch_metadata) = CatchMetadataDirective::find(&field.directives) {
+            self.build_catch_field(catch_metadata, primitive)
         } else {
             primitive
         }
@@ -1246,6 +1254,8 @@ impl<'schema, 'builder, 'config> CodegenBuilder<'schema, 'builder, 'config> {
                 RequiredMetadataDirective::find(&frag_spread.directives)
             {
                 self.build_required_field(required_metadata, resolver_primitive)
+            } else if let Some(catch_metadata) = CatchMetadataDirective::find(&frag_spread.directives) {
+                self.build_catch_field(catch_metadata, resolver_primitive)
             } else {
                 resolver_primitive
             }
@@ -1676,6 +1686,7 @@ impl<'schema, 'builder, 'config> CodegenBuilder<'schema, 'builder, 'config> {
         context: &mut ContextualMetadata,
         client_edge_metadata: &ClientEdgeMetadata<'_>,
         required_metadata: Option<RequiredMetadataDirective>,
+        catch_metadata: Option<CatchMetadataDirective>,
     ) -> Primitive {
         context.has_client_edges = true;
         let backing_field = match &client_edge_metadata.backing_field {
@@ -1698,7 +1709,10 @@ impl<'schema, 'builder, 'config> CodegenBuilder<'schema, 'builder, 'config> {
             ),
         };
 
-        let selections_item = if required_metadata.is_none() {
+        let no_required = required_metadata.is_none();
+        let no_catch = catch_metadata.is_none();
+
+        let selections_item = if no_required && no_catch {
             self.build_linked_field(context, client_edge_metadata.linked_field)
         } else {
             let next_directives = client_edge_metadata
@@ -1706,7 +1720,9 @@ impl<'schema, 'builder, 'config> CodegenBuilder<'schema, 'builder, 'config> {
                 .directives
                 .iter()
                 .filter(|directive| {
-                    directive.name.item != RequiredMetadataDirective::directive_name()
+                    let is_required = directive.name.item != RequiredMetadataDirective::directive_name();
+                    let is_catch = directive.name.item != CatchMetadataDirective::directive_name();
+                    return !is_required && !is_catch;
                 })
                 .cloned()
                 .collect();
@@ -1797,10 +1813,13 @@ impl<'schema, 'builder, 'config> CodegenBuilder<'schema, 'builder, 'config> {
                         CodegenVariant::Reader => {
                             let required_metadata =
                                 RequiredMetadataDirective::find(&inline_frag.directives).cloned();
+                            let catch_metadata =
+                                CatchMetadataDirective::find(&inline_frag.directives).cloned();
                             self.build_reader_client_edge(
                                 context,
                                 &client_edge_metadata,
                                 required_metadata,
+                                catch_metadata
                             )
                         }
                         CodegenVariant::Normalization => {

@@ -13,6 +13,7 @@ To build the wasm module:
 cd relay-compiler-playground
 wasm-pack build --target web
 ```
+The step above may take some time, so be patient.
 
 I had to do `rustup component add rust-src` as well.
 
