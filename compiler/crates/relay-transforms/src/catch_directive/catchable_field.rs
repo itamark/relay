@@ -9,14 +9,16 @@ use common::Diagnostic;
 use common::Location;
 use common::NamedItem;
 use common::WithLocation;
+use graphql_ir::Argument;
+use graphql_ir::ConstantValue;
 use graphql_ir::Directive;
 use graphql_ir::Field;
 use graphql_ir::LinkedField;
 use graphql_ir::ScalarField;
+use graphql_ir::Value;
 use intern::string_key::StringKey;
 use schema::SDLSchema;
 
-use super::validation_message::ValidationMessage;
 use super::CATCH_DIRECTIVE_NAME;
 use super::TO_ARGUMENT;
 use crate::catch_directive::CatchTo;
@@ -64,17 +66,21 @@ impl CatchableField for LinkedField {
 }
 
 fn get_to_argument(catch_directive: &Directive) -> Result<WithLocation<CatchTo>, Diagnostic> {
-    let maybe_to_arg = catch_directive.arguments.named(*TO_ARGUMENT);
-    let to_arg = maybe_to_arg.ok_or_else(|| {
-        Diagnostic::error(
-            ValidationMessage::CatchToArgumentCatch,
+    let binding = Argument {
+        name: WithLocation::new(
             catch_directive.name.location,
-        )
-    })?;
+            *TO_ARGUMENT,
+        ),
+        value: WithLocation::generated(Value::Constant(ConstantValue::Enum(CatchTo::Result.into())
+            
+        )),
+    };
+    let to_arg = catch_directive.arguments.named(*TO_ARGUMENT).or(Some(&binding));
 
-    let action = to_arg.value.item.expect_constant().unwrap_enum();
+    let location = to_arg.unwrap().value.location;
+    let item = CatchTo::from(to_arg.unwrap().value.item.get_constant().unwrap().unwrap_enum());
     Ok(WithLocation::new(
-        to_arg.value.location,
-        CatchTo::from(action),
+        location,
+        item
     ))
 }

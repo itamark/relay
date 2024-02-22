@@ -18,3 +18,11 @@ async fn action_argument_omitted() {
     let expected = include_str!("catch_directive/fixtures/catch-to-null-included.expected");
     test_fixture(transform_fixture, file!(), "catch-to-null-included.graphql", "catch_directive/fixtures/catch-to-null-included.expected", input, expected).await;
 }
+
+#[tokio::test]
+async fn catch_no_args_included() {
+    let input = include_str!("catch_directive/fixtures/catch-no-args-included.graphql");
+    let expected = include_str!("catch_directive/fixtures/catch-no-args-included.expected");
+    test_fixture(transform_fixture, file!(), "catch-no-args-included.graphql", "catch_directive/fixtures/catch-no-args-included.expected", input, expected).await;
+}
+

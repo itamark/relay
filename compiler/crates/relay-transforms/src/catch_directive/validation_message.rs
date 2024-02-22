@@ -19,8 +19,8 @@ pub(super) enum ValidationMessage {
     #[error("@catch is not supported within @inline fragments.")]
     CatchWithinInlineDirective,
 
-    #[error("Missing `to` argument. @catch expects an `to` argument")]
-    CatchToArgumentCatch,
+    // #[error("Missing `to` argument. @catch expects an `to` argument")]
+    // CatchToArgumentCatch,
 
     #[error(
         "All references to a @catch field must have matching `to` arguments. The `to` used for '{field_name}'"
