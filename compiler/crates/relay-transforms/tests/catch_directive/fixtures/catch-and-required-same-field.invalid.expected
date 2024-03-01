@@ -1,0 +1,13 @@
+==================================== INPUT ====================================
+# expected-to-throw
+fragment EnabledFoo on User {
+  name @catch @required(action: THROW)
+}
+==================================== ERROR ====================================
+✖︎ @catch is not supported with required directive on same field.
+
+  catch-and-required-same-field.invalid.graphql:3:8
+    2 │ fragment EnabledFoo on User {
+    3 │   name @catch @required(action: THROW)
+      │        ^^^^^^
+    4 │ }

@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+use common::DirectiveName;
 use intern::string_key::StringKey;
 use thiserror::Error;
 
@@ -18,6 +19,10 @@ pub(super) enum ValidationMessage {
 
     #[error("@catch is not supported within @inline fragments.")]
     CatchWithinInlineDirective,
+
+
+    #[error("@catch is not supported with {directive_name} directive on same field.")]
+    CatchWithDisallowedDirective { directive_name: DirectiveName},
 
     // #[error("Missing `to` argument. @catch expects an `to` argument")]
     // CatchToArgumentCatch,

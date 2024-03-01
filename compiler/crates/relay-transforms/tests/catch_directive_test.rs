@@ -26,3 +26,9 @@ async fn catch_no_args_included() {
     test_fixture(transform_fixture, file!(), "catch-no-args-included.graphql", "catch_directive/fixtures/catch-no-args-included.expected", input, expected).await;
 }
 
+#[tokio::test]
+async fn catch_and_required_invalid() {
+    let input = include_str!("catch_directive/fixtures/catch-and-required-same-field.invalid.graphql");
+    let expected = include_str!("catch_directive/fixtures/catch-and-required-same-field.invalid.expected");
+    test_fixture(transform_fixture, file!(), "catch-and-required-same-field.invalid.graphql", "catch_directive/fixtures/catch-and-required-same-field.invalid.expected", input, expected).await;
+}

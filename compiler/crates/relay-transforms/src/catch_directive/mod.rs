@@ -11,7 +11,6 @@ mod validation_message;
 use std::borrow::Cow;
 use std::mem;
 use std::sync::Arc;
-
 use catchable_field::CatchMetadata;
 use catchable_field::CatchableField;
 use common::ArgumentName;
@@ -53,6 +52,12 @@ lazy_static! {
     pub static ref RESULT_TO: StringKey = "RESULT".intern();
     static ref NULL_TO: StringKey = "NULL".intern();
     static ref INLINE_DIRECTIVE_NAME: DirectiveName = DirectiveName("inline".intern());
+    static ref REQUIRED_DIRECTIVE_NAME: DirectiveName = DirectiveName("required".intern());
+    // allowlist, not blocklist
+    // only allow to:null first?
+    // separately: RESULT with typegen (flow)
+    // 
+    static ref ALLOW_LISTED_DIRECTIVES: Vec<DirectiveName> = vec![*CATCH_DIRECTIVE_NAME];
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -92,6 +97,7 @@ struct CatchDirective<'s> {
     errors: Vec<Diagnostic>,
     path: Vec<&'s str>,
     within_abstract_inline_fragment: bool,
+    disallowed_directives_attached: Vec<DirectiveName>,
     parent_inline_fragment_directive: Option<Location>,
     path_catch_map: StringKeyMap<MaybeCatchField>,
     current_node_catch_children: StringKeyMap<CatchField>,
@@ -106,6 +112,7 @@ impl<'program> CatchDirective<'program> {
             errors: Default::default(),
             path: vec![],
             within_abstract_inline_fragment: false,
+            disallowed_directives_attached: Default::default(),
             parent_inline_fragment_directive: None,
             path_catch_map: Default::default(),
             current_node_catch_children: Default::default(),
@@ -131,6 +138,20 @@ impl<'program> CatchDirective<'program> {
                 // TODO(T70172661): Also referece the location of the inline fragment, once they have a location.
                 directive_location,
             ))
+        }
+    }
+
+    fn assert_not_disallowed_directives_attached(&mut self, directive_location: Location) {
+        if !self.disallowed_directives_attached.is_empty() {
+            for disallowed_directive_name in self.disallowed_directives_attached.iter() {
+                self.errors.push(Diagnostic::error(
+                    ValidationMessage::CatchWithDisallowedDirective {
+                        directive_name: *disallowed_directive_name
+                    },
+                    // TODO(T70172661): Also referece the location of the inline fragment, once they have a location.
+                    directive_location,
+                ))
+            }
         }
     }
 
@@ -207,6 +228,7 @@ impl<'program> CatchDirective<'program> {
         let field_name = field.name_with_location(&self.program.schema);
 
         if let Some(metadata) = maybe_catch {
+            self.assert_not_disallowed_directives_attached(metadata.directive_location);
             self.assert_not_within_abstract_inline_fragment(metadata.directive_location);
             self.assert_not_within_inline_directive(metadata.directive_location);
             self.current_node_catch_children.insert(
@@ -325,10 +347,12 @@ impl<'s> Transformer for CatchDirective<'s> {
             .map(|inline_directive| inline_directive.name.location);
 
         let selections = self.transform_selections(&fragment.selections);
-        let directives = maybe_add_children_can_bubble_metadata_directive(
-            &fragment.directives,
-            &self.current_node_catch_children,
-        );
+        let directives = self.transform_directives(&fragment.directives);
+        
+        // maybe_add_children_can_bubble_metadata_directive(
+        //     &fragment.directives,
+        //     &self.current_node_catch_children,
+        // );
         if selections.should_keep() && directives.should_keep() {
             return Transformed::Keep;
         }
@@ -370,6 +394,8 @@ impl<'s> Transformer for CatchDirective<'s> {
         self.path.push(name);
         let path_name = self.path.join(".").intern();
         self.path.pop();
+        
+        self.disallowed_directives_attached = maybe_add_disallowed_directives(&field.directives, &self.disallowed_directives_attached);
 
         match self.get_catch_metadata(field, path_name) {
             None => Transformed::Keep,
@@ -401,6 +427,8 @@ impl<'s> Transformer for CatchDirective<'s> {
             None => Cow::from(&field.directives),
         };
 
+        
+
         // Once we've handled our own directive, take the parent's catch
         // children map, leaving behind an empty/default map which our children
         // can populate.
@@ -415,6 +443,8 @@ impl<'s> Transformer for CatchDirective<'s> {
         if let Some(catch_metadata) = maybe_catch_metadata {
             self.assert_compatible_catch_children_severity(catch_metadata);
         }
+
+        self.disallowed_directives_attached = maybe_add_disallowed_directives(&field.directives, &self.disallowed_directives_attached);
 
         let next_directives_with_metadata = maybe_add_children_can_bubble_metadata_directive(
             &next_directives,
@@ -470,6 +500,20 @@ impl<'s> Transformer for CatchDirective<'s> {
         self.within_abstract_inline_fragment = previous;
         next_fragment
     }
+
+
+}
+
+fn maybe_add_disallowed_directives(directives: &Vec<Directive>, disallowed_directives_attached: &Vec<DirectiveName>) -> Vec<DirectiveName> {
+    let mut next_disallowed_directives: Vec<DirectiveName> = disallowed_directives_attached.clone();
+
+    for directive in directives.iter() {
+        if !ALLOW_LISTED_DIRECTIVES.contains(&directive.name.item){
+            next_disallowed_directives.push(directive.name.item)
+        }
+    }
+    
+    return next_disallowed_directives;
 }
 
 fn add_metadata_directive(
