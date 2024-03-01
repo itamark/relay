@@ -1,0 +1,40 @@
+==================================== INPUT ====================================
+query EnabledFooQuery {
+  viewer @catch {
+    actor @catch {
+      address @catch {
+        country @catch
+      }
+    }
+  }
+}
+==================================== OUTPUT ===================================
+query EnabledFooQuery {
+  viewer @catch @__CatchMetadataDirective
+  # CatchMetadataDirective {
+  #     to: Result,
+  #     path: "viewer",
+  # }
+   {
+    actor @catch @__CatchMetadataDirective
+    # CatchMetadataDirective {
+    #     to: Result,
+    #     path: "viewer.actor",
+    # }
+     {
+      address @catch @__CatchMetadataDirective
+      # CatchMetadataDirective {
+      #     to: Result,
+      #     path: "viewer.actor.address",
+      # }
+       {
+        country @catch @__CatchMetadataDirective
+        # CatchMetadataDirective {
+        #     to: Result,
+        #     path: "viewer.actor.address.country",
+        # }
+        
+      }
+    }
+  }
+}

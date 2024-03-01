@@ -1,0 +1,9 @@
+query EnabledFooQuery {
+  viewer @catch {
+    actor @catch {
+      address @catch {
+        country @catch
+      }
+    }
+  }
+}
