@@ -72,7 +72,6 @@ fn get_to_argument(catch_directive: &Directive) -> Result<WithLocation<CatchTo>,
             *TO_ARGUMENT,
         ),
         value: WithLocation::generated(Value::Constant(ConstantValue::Enum(CatchTo::Result.into())
-            
         )),
     };
     let to_arg = catch_directive.arguments.named(*TO_ARGUMENT).or(Some(&binding));
